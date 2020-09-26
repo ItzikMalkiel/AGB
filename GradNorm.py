@@ -6,9 +6,7 @@ import main
 class GradNorm():
     def __init__(self, statisticsPrefix, useAdaptiveLossBalancing, adaptiveGradBalancingRatio):
 
-        self.bgGradMA = [1]
-        self.genGanGradMA = [1]
-        self.dLossGradMA = [1]
+        self.dLossGradMA = 1.0
         self.statisticsPrefix = statisticsPrefix
 
         self.useAdaptiveLossBalancing = useAdaptiveLossBalancing
@@ -19,18 +17,7 @@ class GradNorm():
         self.maGAN_debug = 1.0
         self.count_train_steps = 0
 
-        # self.rate = 0.99
         self.rate = 0.01
-
-    def updateDisc(self, dLossStd, step):
-        if step == 0:
-            self.dLossGradMA = dLossStd
-        elif step < self.statisticsPrefix:
-            if (dLossStd != 0):
-                # self.dLossGradMA = self.dLossGradMA * self.rate + (1 - self.rate) * dLossStd
-                self.dLossGradMA = self.dLossGradMA * (1.0 - self.rate) + self.rate * dLossStd
-
-        return self.dLossGradMA / self.ganRatio
 
     def handleNormsAGB(self, sess, feed_dict):
 

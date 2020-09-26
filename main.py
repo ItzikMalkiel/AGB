@@ -2,7 +2,6 @@ import os
 import tensorflow.compat.v1 as tf # if you have tf v2 and you would like to use the api of tf v1
 import argparse
 import numpy as np
-import os
 from model import pix2pix
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
