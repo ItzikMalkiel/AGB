@@ -12,6 +12,7 @@ from ops import *
 from utils import *
 import numpy as np
 
+from GradBalance import GradBalancer
 
 class pix2pix(object):
     def __init__(self, sess, L1_lambda, useAdaptiveLossBalancing, adaptiveGradBalancingRatio, gan_weight, decayD,
@@ -160,14 +161,13 @@ class pix2pix(object):
         print("[Sample] d_loss: {:.8f}, g_loss: {:.8f}".format(d_loss, g_loss))
 
     def train(self, args, RUN_NAME, loadPreTrained=False):
-        from GradNorm import GradNorm
 
         # statisticsPrefix, ganRatio = 10000, 1
         statisticsPrefix, ganRatio = 10000000000, 1
         bgGrad = tf.gradients(tf.get_default_graph().get_tensor_by_name("pixelLoss:0"), self.fake_B)
         genGanGrad = tf.gradients(tf.get_default_graph().get_tensor_by_name("genGanLossAGB:0"), self.fake_B)
         dLossGrad = tf.gradients(self.d_loss_fake, self.fake_B)
-        gradNorm = GradNorm(statisticsPrefix, self.useAdaptiveLossBalancing, self.adaptiveGradBalancingRatio)
+        grad_balancer = GradBalancer(statisticsPrefix, self.useAdaptiveLossBalancing, self.adaptiveGradBalancingRatio)
 
         gradPredMSEVar = (tf.reduce_mean(tf.sqrt((bgGrad[0] - tf.reduce_mean(bgGrad[0])) ** 2)) ** (0.5))
         gradPredGANVar = (tf.reduce_mean(tf.sqrt((genGanGrad[0] - tf.reduce_mean(genGanGrad[0])) ** 2)) ** (0.5))
@@ -218,7 +218,7 @@ class pix2pix(object):
                 if (self.dataset_name == 'edges2shoes'):
                     batch_images = np.concatenate((batch_images[:, :, :, 3:6], batch_images[:, :, :, 0:3]), axis=3)
 
-                feedDict = self.buildFeedDict(batch_idxs, batch_images, bgGrad, dLossGrad, epoch, genGanGrad, gradNorm,
+                feedDict = self.buildFeedDict(batch_idxs, batch_images, bgGrad, dLossGrad, epoch, genGanGrad, grad_balancer,
                                               idx)
 
                 _, summary_str = self.sess.run([d_optim, merged], feed_dict=feedDict)
@@ -240,7 +240,7 @@ class pix2pix(object):
                          time.time() - start_time, errD_fake + errD_real, errG, errD))
 
                 if np.mod(counter, 100) == 1 or counter < 100:
-                    self.sample_model(args.sample_dir, epoch, idx, batch_idxs, bgGrad, dLossGrad, genGanGrad, gradNorm)
+                    self.sample_model(args.sample_dir, epoch, idx, batch_idxs, bgGrad, dLossGrad, genGanGrad, grad_balancer)
 
                 if np.mod(counter, 500) == 2:
                     self.save(args.checkpoint_dir, counter)
