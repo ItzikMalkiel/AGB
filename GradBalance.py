@@ -3,7 +3,7 @@ import tensorflow.compat.v1 as tf
 import main
 
 
-class GradNorm():
+class GradBalancer():
     def __init__(self, statisticsPrefix, useAdaptiveLossBalancing, adaptiveGradBalancingRatio):
 
         self.dLossGradMA = 1.0
